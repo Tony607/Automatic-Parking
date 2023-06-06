@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.optimize import minimize
 import copy
-
-
+import matplotlib.pyplot as plt
+import csv
 class Car_Dynamics:
     def __init__(self, x_0, y_0, v_0, psi_0, length, dt):
         self.dt = dt             # sampling time
@@ -37,7 +37,7 @@ class MPC_Controller:
         self.Rd = np.diag([0.01, 1.0])                 # input difference cost matrix
         self.Q = np.diag([1.0, 1.0])                   # state cost matrix
         self.Qf = self.Q                               # state final matrix
-
+        
     def mpc_cost(self, u_k, my_car, points):
         mpc_car = copy.copy(my_car)
         u_k = u_k.reshape(self.horiz, 2).T
@@ -57,13 +57,39 @@ class MPC_Controller:
                 cost += np.sum(self.Rd@((u_k[:,i+1] - u_k[:,i])**2))
         return cost
 
-    def optimize(self, my_car, points):
+    def optimize(self, my_car, points, monitor):
         self.horiz = points.shape[0]
         bnd = [(-5, 5),(np.deg2rad(-60), np.deg2rad(60))]*self.horiz
-        result = minimize(self.mpc_cost, args=(my_car, points), x0 = np.zeros((2*self.horiz)), method='SLSQP', bounds = bnd)
+        result = minimize(self.mpc_cost, args=(my_car, points), x0 = np.zeros((2*self.horiz)), method='SLSQP', bounds = bnd, callback=monitor.callback)
         return result.x[0],  result.x[1]
 
 
+class OptimizerMonitor:
+    def __init__(self):
+        self.iterations_per_optimization = []
+
+    def callback(self, xk):
+        self.iterations += 1
+
+    def reset_iterations(self):
+        self.iterations = 0
+
+    def save_iterations(self):
+        self.iterations_per_optimization.append(self.iterations)
+
+    def save_data(self):
+        with open('iterations.csv', 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(["Iterations"])
+            for iter_count in self.iterations_per_optimization:
+                writer.writerow([iter_count])
+
+    def plot(self):
+        plt.hist(self.iterations_per_optimization, bins=20)
+        plt.title("Iteration Distribution")
+        plt.xlabel("Number of iterations")
+        plt.ylabel("Frequency")
+        plt.show()
 
 ######################################################################################################################################################################
 

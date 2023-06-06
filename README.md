@@ -1,27 +1,21 @@
-# Automatic Parallel Parking: Path Planning, Path Tracking & Control
+# 自动并排停车：路径规划、路径追踪与控制
 
-This repository contains a python implementation of an automatic parallel parking system in a virtual environment that includes path planning, path tracking, and parallel parking.
- The agent navigates its route through the environment and is directed to the assigned park location by the MPC controller. You can find the article on [Towards Data Science](https://towardsdatascience.com/automatic-parallel-parking-system-including-path-planning-path-tracking-and-parallel-parking-in-a-ece780b2e8e0).
+这个仓库包含了一个在虚拟环境中实现自动并排停车系统的Python实现，包括路径规划、路径追踪和并排停车。代理(Agent)通过MPC控制器指导其在环境中的路线，并导向分配的停车位置。您可以在哔哩哔哩上找到视频教程 [控制的诗与远方——一种生活与科技的并行视角]()。
 
-## Envroinment
-The first step to develop an auto park system is to design and develop an environment capable of giving visual render using ```OpenCV``` library.
-The environment is implemented in ```environment.py``` as a class and receives obstacles at the beginning ```env = Environment(obs)```.
-The agent can be placed using ```env.render(x,y,angle)```.
-A sample of the environment is displayed below. You can choose the parking spot from 1 to 24.
+## 环境
+开发自动停车系统的第一步是设计和开发一个能够利用`OpenCV`库进行视觉渲染的环境。这个环境在`environment.py`中以一个类的形式实现，并在开始时接收障碍物`env = Environment(obs)`。可以使用`env.render(x,y,angle)`来放置代理。下面显示了一个环境样本，您可以从1到24中选择停车位。
 
-![developed environment](https://user-images.githubusercontent.com/56114938/127310550-745d7123-f02f-48ae-96a7-9f82089b9fd9.JPG)
+![开发环境](https://user-images.githubusercontent.com/56114938/127310550-745d7123-f02f-48ae-96a7-9f82089b9fd9.JPG)
 
-## Path Planning
-#### A* Algorithm
-The agent will find a path from start to its goal using A*. 
-This implementation of A* from [PythonRobotics](https://pythonrobotics.readthedocs.io/en/latest/modules/path_planning.html) considers parameters like obstacles and robot radius.
+## 路径规划
+#### A* 算法
+代理将使用A*找到从开始到目标的路径。[PythonRobotics](https://pythonrobotics.readthedocs.io/en/latest/modules/path_planning.html) 的这个A*实现考虑了障碍物和机器人半径等参数。
 
-#### Interpolating Path With B-spline
-After finding a path in a discrete 100\*100 space, the path is smoothed and scaled to 1000\*1000 space of environment using b-spline.
-The result is a set of points to guide our agent!
+#### 用B样条插值路径
+找到在离散的100\*100空间中的路径后，使用b样条将路径平滑并缩放到1000\*1000的环境空间。结果是一组引导我们的代理的点！
 
-## Path Tracking
-**The kinematic model** of the car is:
+## 路径追踪
+汽车的**运动模型**是:
 ```math
 \left\{\begin{matrix}
 \dot{x} = v . cos(ψ)\\
@@ -30,48 +24,34 @@ The result is a set of points to guide our agent!
 \dot{ψ} = v . tan(δ)/L
 \end{matrix}\right.
 ```
-```a: acceleration, δ: steering angle, ψ: yaw angle, L: wheelbase, x: x-position, y: y-position, v: velocity```
+```a: 加速度, δ: 转向角, ψ: 偏航角, L: 轴距, x: x位置, y: y位置, v: 速度```
 
-**The state vector** is:
+**状态向量**是:
 ```math
 z=[x,y,v,ψ]
 ```
-```x: x-position, y: y-position, v: velocity, ψ: yaw angle```
+```x: x位置, y: y位置, v: 速度, ψ: 偏航角```
 
-**The input vector** is:
+**输入向量**是:
 ```math
 u=[a,δ]
 ```
-```a: acceleration, δ: steering angle```
+```a: 加速度, δ: 转向角```
 
-#### Control
-The MPC controller controls vehicle speed and steering based on the model and the car is directed through the path. There is an option for using the linearized model for MPC. In this case MPC linearizes the kinematic model around the operating point and then does the optimization.
+#### 控制
+MPC控制器根据模型控制车辆的速度和转向，车辆通过路径指导。这里有一个选项可以使用线性化模型进行MPC。在这种情况下，MPC
 
-## Parallel Parking
-This part consists of 4 rules that the agent must choose according to parking position. 
-At first, the agent will find a path to park position then it will compute the arriving angle. 
-Based on the arriving angle, the agent chooses a coordinate as ensure1. 
-After that, the parking path is planned from ensure1 to ensure2 using 2 circle equations as mentioned below. 
-MPC controls the agent and car parks in ensure2 coordinate.
+会在操作点周围线性化运动模型，然后进行优化。
 
-![automatic_parking_process](https://user-images.githubusercontent.com/56114938/128083454-60f8ba82-00a8-43a2-b8ad-8d4ad09cc762.gif)
+## 并排停车
+这部分包含4个规则，代理必须根据停车位置选择。首先，代理会找到一个到停车位置的路径，然后计算到达角度。根据到达角度，代理选择一个坐标作为ensure1。之后，使用下面提到的2个圆方程，规划从ensure1到ensure2的停车路径。MPC控制代理，车辆在ensure2坐标处停车。
 
-## Inference
-Run the code using this command:
+![自动停车过程](https://user-images.githubusercontent.com/56114938/128083454-60f8ba82-00a8-43a2-b8ad-8d4ad09cc762.gif)
+
+## 运行
+使用以下命令运行代码：
 ```
+$ pip install -r requirements.txt
+$ cd CAR_kinematic_model
 $ python main_autopark.py --x_start 0 --y_start 90 --psi_start 0 --parking 7
 ```
-Cite using [![DOI](https://zenodo.org/badge/328711550.svg)](https://zenodo.org/badge/latestdoi/328711550)
-
-## About Us
-We as Team Pandas won 1st place in the National Rahneshan competition 2020-2021 for autonomous vehicles. This contest has been one of the most competitive and challenging contests in the Rahneshan tournaments with more than 15 teams competing from top universities in Iran.
-
-## Contact
-Feel free to contact us via email or connect with us on linkedin.
-
-- Amirhossein Heydarian ---  [Linkedin](https://www.linkedin.com/in/amirhosseinh77/), [Github](https://github.com/amirhosseinh77), [Email](mailto:amirhossein4633@gmail.com )
-- Aida Mohammadshahi ---  [Linkedin](https://www.linkedin.com/in/aida-mohammadshahi-9845861b3/), [Github](https://github.com/aidamohammadshahi), [Email](mailto:aidamoshahi@gmail.com)
-- Milad Soltany --- [Linkedin](https://www.linkedin.com/in/milad-soltany/), [Github](https://github.com/miladsoltany) , [Email](mailto:soltany.m.99@gmail.com)
-- Abbas Omidi --- [Linkedin](https://www.linkedin.com/in/abbasomidi77/), [Github](https://github.com/abbasomidi77), [Email](mailto:abbasomidi77@gmail.com)
-- Amirhossein Kazerooni ---  [Linkedin](https://www.linkedin.com/in/amirhossein477/), [Github](https://github.com/amirhossein-kz), [Email](mailto:Amirhossein477@gmail.com )
-

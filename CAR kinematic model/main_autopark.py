@@ -5,7 +5,7 @@ import argparse
 
 from environment import Environment, Parking1
 from pathplanning import PathPlanning, ParkPathPlanning, interpolate_path
-from control import Car_Dynamics, MPC_Controller, Linear_MPC_Controller
+from control import Car_Dynamics, MPC_Controller, OptimizerMonitor
 from utils import angle_of_line, make_square, DataLogger
 
 if __name__ == '__main__':
@@ -85,9 +85,12 @@ if __name__ == '__main__':
 
     ################################## control ##################################################
     print('driving to destination ...')
+    monitor = OptimizerMonitor()
     for i,point in enumerate(final_path):
-        
-            acc, delta = controller.optimize(my_car, final_path[i:i+MPC_HORIZON])
+            monitor.reset_iterations()  # reset the counter at the start of each optimization
+            acc, delta = controller.optimize(my_car, final_path[i:i+MPC_HORIZON], monitor)
+            monitor.save_iterations()  # save the iteration count after each optimization
+            
             my_car.update_state(my_car.move(acc,  delta))
             res = env.render(my_car.x, my_car.y, my_car.psi, delta)
             logger.log(point, my_car, acc, delta)
@@ -95,7 +98,9 @@ if __name__ == '__main__':
             key = cv2.waitKey(1)
             if key == ord('s'):
                 cv2.imwrite('res.png', res*255)
-
+    monitor.save_data()
+    monitor.plot()
+    
     # zeroing car steer
     res = env.render(my_car.x, my_car.y, my_car.psi, 0)
     logger.save_data()
