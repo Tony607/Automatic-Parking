@@ -52,6 +52,6 @@ MPC控制器根据模型控制车辆的速度和转向，车辆通过路径指�
 使用以下命令运行代码：
 ```
 $ pip install -r requirements.txt
-$ cd CAR_kinematic_model
+$ cd "CAR kinematic model"
 $ python main_autopark.py --x_start 0 --y_start 90 --psi_start 0 --parking 7
 ```
